@@ -21,11 +21,10 @@ public class SizeableInputField : MonoBehaviour
     [Range(0.0f, 3.0f)]
     [SerializeField] private float duration = 0.5f;
     
+    private TMP_InputField _inputField;
+    
     private RectTransform _rectTransform;
     
-    private TMP_InputField _inputField;
-    private RectTransform _carretTransform;
-
     private float _rectHeight;
     
     private int _lineCount;
@@ -36,23 +35,14 @@ public class SizeableInputField : MonoBehaviour
     {
         // Getting references
         _rectTransform = this.GetComponent<RectTransform>();
+        
         _inputField = this.GetComponent<TMP_InputField>();
-        _carretTransform = this.transform.GetChild(0).GetChild(0).GetComponent<RectTransform>();
 
         // Saving offsets
         _rectHeight = _rectTransform.sizeDelta.y;
         
         // Adding resize event
         _inputField.onValueChanged.AddListener((_) => Resize());
-    }
-    
-    private void LateUpdate()
-    {
-        if (_isResizing)
-        {
-            _inputField.textComponent.rectTransform.anchoredPosition = Vector2.zero;
-            _carretTransform.anchoredPosition = Vector2.zero;
-        }
     }
     
     private void Resize()
@@ -74,28 +64,13 @@ public class SizeableInputField : MonoBehaviour
         if (lineCount > maxLineCount)
         {
             _inputField.verticalScrollbar.gameObject.SetActive(true);
+            _inputField.textComponent.overflowMode = TextOverflowModes.Overflow;
             
             return;
         }
         _inputField.verticalScrollbar.gameObject.SetActive(false);
-        
-        // Changing text pivot
-        if (lineCount > _lineCount) 
-        {
-            _carretTransform.pivot = new(_carretTransform.pivot.x, 1.0f);
-            _inputField.textComponent.rectTransform.pivot = new(_inputField.textComponent.rectTransform.pivot.x, 1.0f);
-        }
-        if (lineCount == _lineCount) 
-        {
-            _carretTransform.pivot = new(_carretTransform.pivot.x, 0.5f);
-            _inputField.textComponent.rectTransform.pivot = new(_inputField.textComponent.rectTransform.pivot.x, 0.5f);
-        }
-        if (lineCount < _lineCount) 
-        {
-            _carretTransform.pivot = new(_carretTransform.pivot.x, 0.0f);
-            _inputField.textComponent.rectTransform.pivot = new(_inputField.textComponent.rectTransform.pivot.x, 0.0f);
-        }
-
+        _inputField.textComponent.overflowMode = TextOverflowModes.Page;
+    
         // Resizing if line number is changed
         if (lineCount != _lineCount)
         {
