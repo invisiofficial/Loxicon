@@ -2,7 +2,6 @@ using System.Collections;
 using System;
 
 using UnityEngine;
-using UnityEngine.UI;
 
 using TMPro;
 
@@ -47,6 +46,9 @@ public class SizeableInputField : MonoBehaviour
     
     private void Resize()
     {
+        // Checking for enabled
+        if (!_inputField.enabled) return; 
+        
         // Checking for resizing
         if (_isResizing)
         {
