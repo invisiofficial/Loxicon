@@ -27,7 +27,7 @@ public class LLMManager : MonoBehaviour
     {
         _cts = new();
         
-        string modelPath = Application.streamingAssetsPath + "/" + "qwen2.5-1.5b-instruct-q4_k_m.gguf";
+        string modelPath = Application.streamingAssetsPath + "/" + "qwen2.5-7b-instruct-q4_k_m.gguf";
 
         // Load weights into memory
         var parameters = new ModelParams(modelPath)
