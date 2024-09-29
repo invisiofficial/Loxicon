@@ -11,7 +11,7 @@ public class MessagePrinter : MonoBehaviour
     
     private TMP_Text _messageText;
     
-    private void Initialize() => _messageText = this.transform.GetChild(2).GetChild(0).GetComponent<TMP_Text>();
+    private void Initialize() => _messageText = this.transform.GetChild(2).GetChild(1).GetComponent<TMP_Text>();
     
     public void Print(string messsage) => StartCoroutine(PrintMessage(messsage));
     

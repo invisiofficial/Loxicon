@@ -2,12 +2,11 @@ using System;
 using System.Collections;
 
 using UnityEngine;
+using UnityEngine.UI;
 
 using TMPro;
 
 using DG.Tweening;
-using UnityEngine.UI;
-using Unity.VisualScripting;
 
 public class SizeableText : MonoBehaviour
 {
@@ -68,12 +67,9 @@ public class SizeableText : MonoBehaviour
             
             _lineCount = lineCount;
             
-            _rectTransform.DOSizeDelta(new Vector2(_rectTransform.sizeDelta.x, _rectHeight * (_lineCount + heightFactor - 1)), duration).onComplete = () =>
-            {
-                LayoutRebuilder.ForceRebuildLayoutImmediate(this.transform.parent as RectTransform);
-                
-                _isResizing = false;
-            };
+            Tween tween = _rectTransform.DOSizeDelta(new Vector2(_rectTransform.sizeDelta.x, _rectHeight * (_lineCount + heightFactor - 1)), duration);
+            tween.onUpdate = () => LayoutRebuilder.ForceRebuildLayoutImmediate(this.transform.parent as RectTransform);
+            tween.onComplete = () => _isResizing = false;
         }
     }
     
