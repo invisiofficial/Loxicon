@@ -9,23 +9,22 @@ using LLama.Common;
 using Cysharp.Threading.Tasks;
 using System.Threading;
 
-public class LLMManager : MonoBehaviour
+public class AssistantInput : MonoBehaviour
 {
-    #region Singleton implementation
-
-    public static LLMManager Instance;
-    private void Awake() => Instance = this;
-
-    #endregion
-
     private ChatSession _chatSession;
     private string _message = string.Empty;
+    
+    private bool _isAvailable = true;
     
     private CancellationTokenSource _cts;
 
     private async UniTaskVoid Start()
     {
         _cts = new();
+        
+        // Listening to the conversation
+        ConversationHandler.OnMessageReceived += SetMessage;
+        ConversationHandler.OnTurnChanged += SetAvailable;
         
         string modelPath = Application.streamingAssetsPath + "/" + "qwen2.5-7b-instruct-q4_k_m.gguf";
 
@@ -41,7 +40,7 @@ public class LLMManager : MonoBehaviour
         using var context = model.CreateContext(parameters);
         var executor = new InteractiveExecutor(context);
 
-        // Add chat history
+        // Adding chat history
         var chatHistory = new ChatHistory();
         chatHistory.AddMessage(AuthorRole.System, "You are an all-knowing AI named Qwen, created by Alibaba Cloud. Qwen is a very responsive assistant who always answers accurately with the least words possible. Qwen always uses English in its answers.");
         chatHistory.AddMessage(AuthorRole.User, "Hello, Qwen.");
@@ -56,7 +55,7 @@ public class LLMManager : MonoBehaviour
         await InferenceRoutine(_cts.Token);
     }
     
-    public async UniTask InferenceRoutine(CancellationToken cancel = default)
+    private async UniTask InferenceRoutine(CancellationToken cancel = default)
     {
         var userMessage = string.Empty;
         while (!cancel.IsCancellationRequested)
@@ -84,7 +83,7 @@ public class LLMManager : MonoBehaviour
             }
             
             // Showing message
-            ConversationManager.Message(stringBuilder.ToString()
+            ConversationHandler.Message(stringBuilder.ToString()
                                         .Replace("User:", string.Empty)
                                         .Replace("user:", string.Empty)
                                         .Replace("USER:", string.Empty)
@@ -94,11 +93,13 @@ public class LLMManager : MonoBehaviour
                                         .Replace("Assistant:", string.Empty)
                                         .Replace("assistant:", string.Empty)
                                         .Replace("ASSISTANT:", string.Empty)
-                                        .Trim(), true);
+                                        .Trim()
+                                        .Trim('\n'));
         }
     }
     
-    public static void Inference(string message) => Instance._message = message;
+    public void SetMessage(string message) => _message = _isAvailable ? message : string.Empty;
+    private void SetAvailable(int turn) => _isAvailable = turn == 0;
     
     private void OnDestroy() => _cts.Cancel();
 }

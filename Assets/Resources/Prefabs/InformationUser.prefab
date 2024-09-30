@@ -1049,6 +1049,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5d9b5242a9960d45886dd5793ecbdce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  onValueChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 79464346123843445}
+        m_TargetAssemblyTypeName: SizeableRect, Assembly-CSharp
+        m_MethodName: Resize
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  text: {fileID: 1347804767817954721}
+  interval: 0.03
 --- !u!114 &79464346123843445
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1062,6 +1079,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   textComponent: {fileID: 1347804767817954721}
+  rectTransform: {fileID: 7941487400169316866}
   heightFactor: 3
   duration: 0.25
 --- !u!1 &7488353489830266137
