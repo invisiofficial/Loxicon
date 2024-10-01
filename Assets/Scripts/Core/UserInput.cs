@@ -51,12 +51,9 @@ public class UserInput : MonoBehaviour
     {
         // Getting references
         _inputField = this.GetComponent<TMP_InputField>();
-        
-        // Unlistening to the conversation
-        ConversationHandler.OnTurnChanged -= SetAvailable;
 
         // Listening to the conversation
-        ConversationHandler.OnTurnChanged += SetAvailable;
+        ConversationManager.Instance.OnTurnChanged += SetAvailable;
         
         // Adding submit event
         _inputField.onSubmit.AddListener((message) => SubmitMessage(message));
@@ -70,7 +67,7 @@ public class UserInput : MonoBehaviour
         if (!_isAvailable) return;
         
         // Sending message
-        ConversationHandler.Message(message != string.Empty ? message : defaultMessages[Random.Range(0, defaultMessages.Length)]);
+        ConversationManager.Message(message != string.Empty ? message : defaultMessages[Random.Range(0, defaultMessages.Length)]);
         
         // Clearing input field
         StartCoroutine(WaitClear());
@@ -89,6 +86,7 @@ public class UserInput : MonoBehaviour
     public static void ResetState()
     {
         Instance._isAvailable = true;
-        ConversationHandler.Turn = 0;
+        Instance._inputField.text = string.Empty;
+        ConversationManager.Clear();
     }
 }

@@ -24,11 +24,8 @@ public class ConversationPrinter : MonoBehaviour
         
         _generatingPrefab = Resources.Load("Prefabs/Generating") as GameObject;
         
-        // Unlistening to the conversation
-        ConversationHandler.OnMessageReceived -= CreateMessage;
-        
         // Listening to the conversation
-        ConversationHandler.OnMessageReceived += CreateMessage;
+        ConversationManager.Instance.OnMessageReceived += CreateMessage;
         
         // Listening to the generation
         AssistantInput.Instance.OnGenerationStarted += () => MentionGenerating(true);
@@ -39,7 +36,7 @@ public class ConversationPrinter : MonoBehaviour
     {
         // Choosing prefab
         GameObject prefab;
-        if (ConversationHandler.Turn == 0) prefab = _blockUserPrefab;
+        if (ConversationManager.Turn == 0) prefab = _blockUserPrefab;
         
         else prefab = _blockAssistantPrefab;
         

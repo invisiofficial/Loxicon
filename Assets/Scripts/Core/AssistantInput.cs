@@ -50,13 +50,9 @@ public class AssistantInput : MonoBehaviour
         // Creating cancellation token
         _cts = new();
         
-        // Unlistening to the conversation
-        ConversationHandler.OnMessageReceived -= SetMessage;
-        ConversationHandler.OnTurnChanged -= SetAvailable;
-        
         // Listening to the conversation
-        ConversationHandler.OnMessageReceived += SetMessage;
-        ConversationHandler.OnTurnChanged += SetAvailable;
+        ConversationManager.Instance.OnMessageReceived += SetMessage;
+        ConversationManager.Instance.OnTurnChanged += SetAvailable;
 
         string modelPath = Application.streamingAssetsPath + "/" + assistantParams.ModelName;
 
@@ -125,7 +121,7 @@ public class AssistantInput : MonoBehaviour
             OnGenerationEnded?.Invoke();
 
             // Showing message
-            ConversationHandler.Message(ClearResponse(stringBuilder.ToString()));
+            ConversationManager.Message(ClearResponse(stringBuilder.ToString()));
         }
     }
 

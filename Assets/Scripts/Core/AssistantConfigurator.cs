@@ -12,110 +12,107 @@ using TMPro;
 public class AssistantConfigurator : MonoBehaviour
 {
     #region Singleton implementation
-    
+
     public static AssistantConfigurator Instance;
     private void Awake() => Instance = this;
-    
+
     #endregion
-    
+
     #region Events
 
     public event Action<string> OnModelChosen;
-    
+
     #endregion
-    
+
     [Header("Configurator UI settings")]
     [Space]
     [SerializeField] private TMP_Dropdown modelNameDropdown;
-    
+
     [SerializeField] private TMP_Dropdown executorDropdown;
-    
+
     [SerializeField] private TMP_InputField contextSizeInputField;
     [SerializeField] private TMP_InputField gpuLayerCountInputField;
-    
+
     [SerializeField] private TMP_InputField temperatureInputField;
     [SerializeField] private TMP_InputField maxTokensInputField;
-    
+
     [SerializeField] private TMP_InputField systemContextInputField;
-    
+
     private const uint DefaultContextSize = 2048;
     private const int DefaultGpuLayerCount = 16;
-    
+
     private const float DefaultTemperature = 0.6f;
     private const int DefaultMaxTokens = 1024;
-    
+
     private const string DefaultSystemContext = "You are an all-knowning and very responsive assistant who always answers accurately with the least words possible. Use only English language.";
-    
+
     private void Start()
     {
         // Setting available models
         modelNameDropdown.ClearOptions();
-        
+
         List<string> names = (from file in new DirectoryInfo(Application.streamingAssetsPath).GetFiles() where file.Name.EndsWith(".gguf") select file.Name).ToList();
         if (names.Count != 0)
         {
             modelNameDropdown.AddOptions(names);
         }
-        else 
+        else
         {
             modelNameDropdown.interactable = false;
             this.GetComponent<Button>().interactable = false;
         }
-        
+
         // Setting available executors
         executorDropdown.ClearOptions();
         executorDropdown.AddOptions(Enum.GetNames(typeof(ExecutorType)).ToList());
-        
+
         // Setting default context size
         contextSizeInputField.placeholder.GetComponent<TMP_Text>().text = DefaultContextSize.ToString();
         // Setting default gpu layer count
         gpuLayerCountInputField.placeholder.GetComponent<TMP_Text>().text = DefaultGpuLayerCount.ToString();
-        
+
         // Setting default temperature
         temperatureInputField.placeholder.GetComponent<TMP_Text>().text = DefaultTemperature.ToString();
         // Setting default max tokens
         maxTokensInputField.placeholder.GetComponent<TMP_Text>().text = DefaultMaxTokens.ToString();
-        
+
         // Setting default system context
         systemContextInputField.placeholder.GetComponent<TMP_Text>().text = DefaultSystemContext;
     }
-    
-    private bool TryGet(out AssistantParams assistantParams)
+
+    private AssistantParams Get()
     {
-        assistantParams = null;
-        
         // Checking for input
         uint contextSize = DefaultContextSize;
-        if (contextSizeInputField.text != string.Empty && (!uint.TryParse(contextSizeInputField.text, out contextSize))) return false;
+        if (contextSizeInputField.text != string.Empty && (!uint.TryParse(contextSizeInputField.text, out contextSize))) throw new FormatException("Context size was incorrect!");
         int gpuLayerCount = DefaultGpuLayerCount;
-        if (gpuLayerCountInputField.text != string.Empty && (!int.TryParse(gpuLayerCountInputField.text, out gpuLayerCount) || gpuLayerCount < 0)) return false;
-    
+        if (gpuLayerCountInputField.text != string.Empty && (!int.TryParse(gpuLayerCountInputField.text, out gpuLayerCount) || gpuLayerCount < 0)) throw new FormatException("GPU layers were incorrect!");
+
         float temperature = DefaultTemperature;
-        if (temperatureInputField.text != string.Empty && (!float.TryParse(temperatureInputField.text, out temperature) || temperature < 0.0f || temperature > 1.0f)) return false;
+        if (temperatureInputField.text != string.Empty && (!float.TryParse(temperatureInputField.text, out temperature) || temperature < 0.0f || temperature > 1.0f)) throw new FormatException("Temperature was incorrect!");
         int maxTokens = DefaultMaxTokens;
-        if (maxTokensInputField.text != string.Empty && (!int.TryParse(maxTokensInputField.text, out maxTokens) || maxTokens < 0)) return false;
-        
+        if (maxTokensInputField.text != string.Empty && (!int.TryParse(maxTokensInputField.text, out maxTokens) || maxTokens < 0)) throw new FormatException("Max tokens value was incorrect!");
+
         string systemContext = systemContextInputField.text;
         if (systemContext == string.Empty) systemContext = DefaultSystemContext;
-        
+
         // Creating configuration
-        assistantParams = new(modelNameDropdown.options[modelNameDropdown.value].text, (ExecutorType)executorDropdown.value, contextSize, gpuLayerCount, temperature, maxTokens, systemContext);
-        
-        return true;
+        return new(modelNameDropdown.options[modelNameDropdown.value].text, (ExecutorType)executorDropdown.value, contextSize, gpuLayerCount, temperature, maxTokens, systemContext);
     }
-    
+
     public async void Launch()
-    {        
-        // Getting configuration
-        if (!TryGet(out AssistantParams assistantParams)) return;
-        
-        // Invoking event
-        string[] names = assistantParams.ModelName.Split('-');
-        OnModelChosen?.Invoke(names[0] + ": " + names[2]);
-        
+    {
         // Trying to launch assistant
         try
         {
+            // Getting configuration
+            AssistantParams assistantParams = Get();
+
+            // Invoking event
+            string[] names = assistantParams.ModelName.Split('-');
+            OnModelChosen?.Invoke(names[0] + ": " + names[2]);
+
+            // Launching
             await AssistantInput.Initialize(assistantParams);
         }
         catch (Exception e)
