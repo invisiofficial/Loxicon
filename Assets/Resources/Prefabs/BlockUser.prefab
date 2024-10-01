@@ -1078,7 +1078,7 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   text: {fileID: 1347804767817954721}
-  interval: 0.03
+  interval: 0
 --- !u!114 &79464346123843445
 MonoBehaviour:
   m_ObjectHideFlags: 0

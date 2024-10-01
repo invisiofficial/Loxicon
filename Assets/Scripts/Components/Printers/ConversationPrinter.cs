@@ -9,29 +9,39 @@ public class ConversationPrinter : MonoBehaviour
     
     private Queue<GameObject> _blocks = new();
     
-    private GameObject _blockUser;
-    private GameObject _blockAssistant;
+    private GameObject _generatingObject;
+    
+    private GameObject _blockUserPrefab;
+    private GameObject _blockAssistantPrefab;
+    
+    private GameObject _generatingPrefab;
     
     private void Start()
     {
         // Getting references
-        _blockUser = Resources.Load("Prefabs/BlockUser") as GameObject;
-        _blockAssistant = Resources.Load("Prefabs/BlockAssistant") as GameObject;
+        _blockUserPrefab = Resources.Load("Prefabs/BlockUser") as GameObject;
+        _blockAssistantPrefab = Resources.Load("Prefabs/BlockAssistant") as GameObject;
+        
+        _generatingPrefab = Resources.Load("Prefabs/Generating") as GameObject;
         
         // Unlistening to the conversation
         ConversationHandler.OnMessageReceived -= CreateMessage;
         
         // Listening to the conversation
         ConversationHandler.OnMessageReceived += CreateMessage;
+        
+        // Listening to the generation
+        AssistantInput.Instance.OnGenerationStarted += () => MentionGenerating(true);
+        AssistantInput.Instance.OnGenerationEnded += () => MentionGenerating(false);
     }
     
     private void CreateMessage(string message)
     {
         // Choosing prefab
         GameObject prefab;
-        if (ConversationHandler.Turn == 0) prefab = _blockUser;
+        if (ConversationHandler.Turn == 0) prefab = _blockUserPrefab;
         
-        else prefab = _blockAssistant;
+        else prefab = _blockAssistantPrefab;
         
         // Creating message object
         GameObject gameObject = Instantiate(prefab, this.transform);
@@ -42,6 +52,19 @@ public class ConversationPrinter : MonoBehaviour
         
         // Checking for blocks limit reached
         if (_blocks.Count > maxBlocks) Destroy(_blocks.Dequeue());
+    }
+    
+    private void MentionGenerating(bool create)
+    {
+        if (create)
+        {
+            _generatingObject = Instantiate(_generatingPrefab, this.transform);
+            _generatingObject.GetComponent<TextPrinter>().Print();
+        }
+        else
+        {
+            Destroy(_generatingObject);
+        }
     }
     
     public void Clear()

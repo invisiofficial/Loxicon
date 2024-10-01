@@ -30,6 +30,17 @@ public class TextPrinter : MonoBehaviour
 
     private IEnumerator PrintMessage(string messsage)
     {
+        // Instantly print
+        if (interval == 0.0f)
+        {
+            text.text = messsage;
+            
+            onValueChanged?.Invoke();
+            
+            yield break;
+        }
+        
+        // Print with interval
         for (int i = 1; i <= messsage.Length; i++)
         {
             text.text = messsage[..i];
