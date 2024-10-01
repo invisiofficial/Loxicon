@@ -18,6 +18,9 @@ public class ConversationPrinter : MonoBehaviour
         _blockUser = Resources.Load("Prefabs/BlockUser") as GameObject;
         _blockAssistant = Resources.Load("Prefabs/BlockAssistant") as GameObject;
         
+        // Unlistening to the conversation
+        ConversationHandler.OnMessageReceived -= CreateMessage;
+        
         // Listening to the conversation
         ConversationHandler.OnMessageReceived += CreateMessage;
     }

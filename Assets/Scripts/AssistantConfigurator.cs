@@ -11,9 +11,16 @@ using TMPro;
 
 public class AssistantConfigurator : MonoBehaviour
 {
+    #region Singleton implementation
+    
+    public static AssistantConfigurator Instance;
+    private void Awake() => Instance = this;
+    
+    #endregion
+    
     #region Events
 
-    public static event Action<string> OnModelChosen;
+    public event Action<string> OnModelChosen;
     
     #endregion
     

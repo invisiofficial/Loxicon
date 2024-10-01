@@ -51,6 +51,9 @@ public class UserInput : MonoBehaviour
     {
         // Getting references
         _inputField = this.GetComponent<TMP_InputField>();
+        
+        // Unlistening to the conversation
+        ConversationHandler.OnTurnChanged -= SetAvailable;
 
         // Listening to the conversation
         ConversationHandler.OnTurnChanged += SetAvailable;

@@ -21,8 +21,8 @@ public class AssistantInput : MonoBehaviour
 
     #region Events
     
-    public static event Action OnGenerationStarted;
-    public static event Action OnGenerationEnded;
+    public event Action OnGenerationStarted;
+    public event Action OnGenerationEnded;
     
     #endregion
 
