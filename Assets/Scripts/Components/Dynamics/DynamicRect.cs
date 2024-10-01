@@ -37,7 +37,7 @@ public class DynamicRect : MonoBehaviour
 
     private bool _isResizing;
 
-    private void Start()
+    private void Awake()
     {
         // Saving offsets
         _rectHeight = rectTransform.sizeDelta.y / heightFactor;
@@ -66,7 +66,13 @@ public class DynamicRect : MonoBehaviour
         onResize?.Invoke(maxLinesReached);
 
         // Resizing if line number is changed
-        if (lineCount == _linesCount || maxLinesReached) return;
+        if (lineCount == _linesCount) return;
+        if (maxLinesReached)
+        {
+            if (_linesCount < maxLinesCount) lineCount = maxLinesCount;
+            
+            else return;
+        }
         _linesCount = lineCount;
 
         _isResizing = true;

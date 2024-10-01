@@ -80,9 +80,9 @@ public class UserInput : MonoBehaviour
             
             yield return new WaitForEndOfFrame();
             
-            _inputField.text = string.Empty;
-            
             _inputField.textComponent.enabled = true;
+            
+            _inputField.text = string.Empty;
         }   
     }
     
