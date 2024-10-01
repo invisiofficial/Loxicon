@@ -962,7 +962,7 @@ GameObject:
   - component: {fileID: 3929662316379755659}
   - component: {fileID: 3881465267625667810}
   m_Layer: 5
-  m_Name: InformationAssistant
+  m_Name: BlockAssistant
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

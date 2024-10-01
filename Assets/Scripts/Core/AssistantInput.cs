@@ -19,6 +19,13 @@ public class AssistantInput : MonoBehaviour
 
     #endregion
 
+    #region Events
+    
+    public static event Action OnGenerationStarted;
+    public static event Action OnGenerationEnded;
+    
+    #endregion
+
     private readonly List<string> AntiPromts = new() { "User:", "user:", "USER:",
                                                        "Human:", "human:", "HUMAN:" };
     private readonly List<string> RoleNames = new() { "User:", "user:", "USER:",
@@ -40,6 +47,13 @@ public class AssistantInput : MonoBehaviour
     public static async UniTask Initialize(AssistantParams assistantParams) => await Instance.OnInitialize(assistantParams);
     private async UniTask OnInitialize(AssistantParams assistantParams)
     {
+        // Creating cancellation token
+        _cts = new();
+        
+        // Unlistening to the conversation
+        ConversationHandler.OnMessageReceived -= SetMessage;
+        ConversationHandler.OnTurnChanged -= SetAvailable;
+        
         // Listening to the conversation
         ConversationHandler.OnMessageReceived += SetMessage;
         ConversationHandler.OnTurnChanged += SetAvailable;
@@ -80,28 +94,35 @@ public class AssistantInput : MonoBehaviour
         };
 
         // Starting chat
-        _cts = new();
-        await InferenceRoutine(_cts.Token);
+        await InferenceRoutine();
     }
 
-    private async UniTask InferenceRoutine(CancellationToken cancel = default)
+    private async UniTask InferenceRoutine()
     {
         var userMessage = string.Empty;
-        while (!cancel.IsCancellationRequested)
+        while (!_cts.Token.IsCancellationRequested)
         {
             // Waiting for input text
             await UniTask.WaitUntil(() => _message != string.Empty);
             userMessage = _message;
             _message = string.Empty;
+            
+            // Invoking event
+            OnGenerationStarted?.Invoke();
 
             // Getting response
             StringBuilder stringBuilder = new();
             await foreach (var text in _chatSession.ChatAsync(new ChatHistory.Message(AuthorRole.User, userMessage), _inferenceParams))
             {
+                if (_cts.Token.IsCancellationRequested) return;
+                
                 stringBuilder.Append(text);
 
                 await UniTask.NextFrame();
             }
+            
+            // Invoking event
+            OnGenerationEnded?.Invoke();
 
             // Showing message
             ConversationHandler.Message(ClearResponse(stringBuilder.ToString()));
@@ -120,11 +141,15 @@ public class AssistantInput : MonoBehaviour
         return response;
     }
 
-    public void SetMessage(string message) => _message = _isAvailable ? message : string.Empty;
+    private void SetMessage(string message) => _message = _isAvailable ? message : string.Empty;
     private void SetAvailable(int turn) => _isAvailable = turn == 0;
 
-    public static void Dispose() => Instance.OnDestroy();
-    private void OnDestroy() => _cts?.Cancel();
+    public static void ResetState()
+    {
+        Instance._cts?.Cancel();
+        Instance._isAvailable = true;
+    }
+    private void OnDestroy() => ResetState();
 }
 
 public enum ExecutorType

@@ -17,4 +17,9 @@ public static class ConversationHandler
         OnMessageReceived?.Invoke(message);
         OnTurnChanged?.Invoke(Turn = ++Turn % TurnCount);
     }
+    
+    public static void Clear()
+    {
+        OnTurnChanged?.Invoke(Turn = 0);
+    }
 }

@@ -9,33 +9,40 @@ public class ConversationPrinter : MonoBehaviour
     
     private Queue<GameObject> _blocks = new();
     
-    private GameObject _informationUser;
-    private GameObject _informationAssistant;
+    private GameObject _blockUser;
+    private GameObject _blockAssistant;
     
     private void Start()
     {
         // Getting references
-        _informationUser = Resources.Load("Prefabs/InformationUser") as GameObject;
-        _informationAssistant = Resources.Load("Prefabs/InformationAssistant") as GameObject;
+        _blockUser = Resources.Load("Prefabs/BlockUser") as GameObject;
+        _blockAssistant = Resources.Load("Prefabs/BlockAssistant") as GameObject;
         
         // Listening to the conversation
-        ConversationHandler.OnMessageReceived += PrintMessage;
+        ConversationHandler.OnMessageReceived += CreateMessage;
     }
     
-    private void PrintMessage(string message)
+    private void CreateMessage(string message)
     {
         // Choosing prefab
         GameObject prefab;
-        if (ConversationHandler.Turn == 0) prefab = _informationUser;
+        if (ConversationHandler.Turn == 0) prefab = _blockUser;
         
-        else prefab = _informationAssistant;
+        else prefab = _blockAssistant;
         
         // Creating message object
         GameObject gameObject = Instantiate(prefab, this.transform);
-        gameObject.GetComponent<TextPrinter>().Print(message);
+        TextPrinter textPrinter = gameObject.GetComponent<TextPrinter>();
+        textPrinter.Message = message;
+        textPrinter.Print();
         _blocks.Enqueue(gameObject);
         
         // Checking for blocks limit reached
         if (_blocks.Count > maxBlocks) Destroy(_blocks.Dequeue());
+    }
+    
+    public void Clear()
+    {
+        while (_blocks.Count > 0) Destroy(_blocks.Dequeue());
     }
 }

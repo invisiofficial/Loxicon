@@ -26,7 +26,7 @@ public class TextPrinter : MonoBehaviour
     }
 
     public void Print() => StartCoroutine(PrintMessage(Message));
-    public void Print(string messsage) => StartCoroutine(PrintMessage(Message = messsage));
+    public void Print(string messsage) => StartCoroutine(PrintMessage(messsage));
 
     private IEnumerator PrintMessage(string messsage)
     {
