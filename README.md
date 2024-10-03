@@ -2,6 +2,9 @@
 
 This project provides a simple yet versatile interface for interacting with various open-source text generation language models.
 
+![GIF](https://github.com/user-attachments/assets/7f62859e-6278-4e07-a21b-92ef5cefc4fb)
+
+
 ## 🔑 Key Features 🔑
 
 * ***Effortless Switching.*** Choose from a range of downloaded open-source LLMs and easily switch between them based on your needs.
