@@ -66,6 +66,10 @@ public class ConversationPrinter : MonoBehaviour
     
     public void Clear()
     {
+        // Destroying blocks
         while (_blocks.Count > 0) Destroy(_blocks.Dequeue());
+        
+        // Destroying generating
+        Destroy(_generatingObject);
     }
 }

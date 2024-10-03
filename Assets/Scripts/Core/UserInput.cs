@@ -87,6 +87,5 @@ public class UserInput : MonoBehaviour
     {
         Instance._isAvailable = true;
         Instance._inputField.text = string.Empty;
-        ConversationManager.Clear();
     }
 }

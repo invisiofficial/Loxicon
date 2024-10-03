@@ -27,10 +27,5 @@ public class ConversationManager : MonoBehaviour
         Instance.OnTurnChanged?.Invoke(Turn = ++Turn % TurnCount);
     }
     
-    public static void Clear()
-    {
-        Instance.OnMessageReceived = null;
-        Instance.OnTurnChanged = null;
-        Turn = 0;
-    }
+    public static void Clear() => Turn = 0;
 }

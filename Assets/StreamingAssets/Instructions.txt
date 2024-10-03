@@ -1,1 +1,11 @@
-Add .gguf models here
+Add .gguf models in this folder
+
+This is not necessary, but it is better to name each model file as follows:
+
+<Name-Size-Proficiency-Quantization.gguf>
+
+The dialog name in program will show <Name: Proficiency>.
+
+Naming example:
+
+<AI-14B-Coder-Q4.gguf>
