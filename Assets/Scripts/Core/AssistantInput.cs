@@ -1,14 +1,13 @@
 using System;
-using System.Text;
-using System.Threading;
+using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
-using LLama;
-using LLama.Common;
-
-using Cysharp.Threading.Tasks;
+using TMPro;
 
 public class AssistantInput : MonoBehaviour
 {
@@ -20,166 +19,117 @@ public class AssistantInput : MonoBehaviour
     #endregion
 
     #region Events
+
+    public event Action<string> OnModelChosen;
     
     public event Action OnGenerationStarted;
     public event Action OnGenerationEnded;
-    
+
     #endregion
+    
+    private const uint DefaultContextSize = 2048;
+    private const int DefaultGpuLayerCount = 16;
 
-    private readonly List<string> AntiPromts = new() { "User:", "user:", "USER:",
-                                                       "Human:", "human:", "HUMAN:" };
-    private readonly List<string> RoleNames = new() { "User:", "user:", "USER:",
-                                                      "Human:", "human:", "HUMAN:",
-                                                      "Assistant:", "assistant:", "ASSISTANT:",
-                                                      "Assist:", "assist:", "ASSIST:",
-                                                      "Ai:", "ai:", "AI:",
-                                                      "System:", "system:", "SYSTEM:"};
+    private const float DefaultTemperature = 0.6f;
+    private const int DefaultMaxTokens = 1024;
 
-    private InferenceParams _inferenceParams;
+    private const string DefaultSystemContext = "You are an all-knowning and very responsive assistant who always answers accurately with the least words possible. Use only English language.";
 
-    private ChatSession _chatSession;
-    private string _message = string.Empty;
+    [Header("Configurator UI settings")]
+    [Space]
+    [SerializeField] private TMP_Dropdown modelNameDropdown;
 
-    private bool _isAvailable = true;
+    [SerializeField] private TMP_Dropdown executorDropdown;
 
-    private CancellationTokenSource _cts;
+    [SerializeField] private TMP_InputField contextSizeInputField;
+    [SerializeField] private TMP_InputField gpuLayerCountInputField;
 
-    public static async UniTask Initialize(AssistantParams assistantParams) => await Instance.OnInitialize(assistantParams);
-    private async UniTask OnInitialize(AssistantParams assistantParams)
+    [SerializeField] private TMP_InputField temperatureInputField;
+    [SerializeField] private TMP_InputField maxTokensInputField;
+
+    [SerializeField] private TMP_InputField systemContextInputField;
+    
+    private IDisposable _assistantChat;
+
+    private void Start()
     {
-        // Creating cancellation token
-        _cts = new();
-        
-        // Listening to the conversation
-        ConversationManager.Instance.OnMessageReceived += SetMessage;
-        ConversationManager.Instance.OnTurnChanged += SetAvailable;
-
-        string modelPath = Application.streamingAssetsPath + "/" + assistantParams.ModelName;
-
-        // Load weights into memory
-        var parameters = new ModelParams(modelPath)
+        // Setting available models
+        modelNameDropdown.ClearOptions();
+        List<string> names = (from file in new DirectoryInfo(Application.streamingAssetsPath).GetFiles() where file.Name.EndsWith(".gguf") select file.Name).ToList();
+        if (names.Count != 0)
         {
-            ContextSize = assistantParams.ContextSize,
-            GpuLayerCount = assistantParams.GpuLayerCount
-        };
-        await UniTask.SwitchToThreadPool();
-        using var model = LLamaWeights.LoadFromFile(parameters);
-        await UniTask.SwitchToMainThread();
-        using var context = model.CreateContext(parameters);
-        
-        // Creating executor
-        LLama.Abstractions.ILLamaExecutor executor = assistantParams.ExecutorType switch
+            modelNameDropdown.AddOptions(names);
+        }
+        else
         {
-            //ExecutorType.StatelessExecutor => new StatelessExecutor(model, parameters),
-            _ => new InteractiveExecutor(context),
-        };
+            modelNameDropdown.interactable = false;
+            this.GetComponent<Button>().interactable = false;
+        }
 
-        // Adding chat history
-        var chatHistory = new ChatHistory();
-        chatHistory.AddMessage(AuthorRole.System, assistantParams.SystemContext);
+        // Setting available executors
+        executorDropdown.ClearOptions();
+        executorDropdown.AddOptions(Enum.GetNames(typeof(ExecutorType)).ToList());
 
-        // Creating chat
-        _chatSession = new(executor, chatHistory);
+        // Setting default context size
+        contextSizeInputField.placeholder.GetComponent<TMP_Text>().text = DefaultContextSize.ToString();
+        // Setting default gpu layer count
+        gpuLayerCountInputField.placeholder.GetComponent<TMP_Text>().text = DefaultGpuLayerCount.ToString();
 
-        // Setting up inference params
-        _inferenceParams = new()
-        {
-            Temperature = assistantParams.Temperature,
-            MaxTokens = assistantParams.MaxTokens,
-            AntiPrompts = AntiPromts
-        };
+        // Setting default temperature
+        temperatureInputField.placeholder.GetComponent<TMP_Text>().text = DefaultTemperature.ToString();
+        // Setting default max tokens
+        maxTokensInputField.placeholder.GetComponent<TMP_Text>().text = DefaultMaxTokens.ToString();
 
-        // Starting chat
-        await InferenceRoutine();
+        // Setting default system context
+        systemContextInputField.placeholder.GetComponent<TMP_Text>().text = DefaultSystemContext;
     }
 
-    private async UniTask InferenceRoutine()
+    private AssistantParams Get()
     {
-        var userMessage = string.Empty;
-        while (!_cts.Token.IsCancellationRequested)
+        // Checking for input
+        uint contextSize = DefaultContextSize;
+        if (contextSizeInputField.text != string.Empty && (!uint.TryParse(contextSizeInputField.text, out contextSize))) throw new FormatException("Context size was incorrect!");
+        int gpuLayerCount = DefaultGpuLayerCount;
+        if (gpuLayerCountInputField.text != string.Empty && (!int.TryParse(gpuLayerCountInputField.text, out gpuLayerCount) || gpuLayerCount < 0)) throw new FormatException("GPU layers were incorrect!");
+
+        float temperature = DefaultTemperature;
+        if (temperatureInputField.text != string.Empty && (!float.TryParse(temperatureInputField.text, out temperature) || temperature < 0.0f || temperature > 1.0f)) throw new FormatException("Temperature was incorrect!");
+        int maxTokens = DefaultMaxTokens;
+        if (maxTokensInputField.text != string.Empty && (!int.TryParse(maxTokensInputField.text, out maxTokens) || maxTokens < 0)) throw new FormatException("Max tokens value was incorrect!");
+
+        string systemContext = systemContextInputField.text;
+        if (systemContext == string.Empty) systemContext = DefaultSystemContext;
+
+        // Creating configuration
+        return new(modelNameDropdown.options[modelNameDropdown.value].text, (ExecutorType)executorDropdown.value, contextSize, gpuLayerCount, temperature, maxTokens, systemContext);
+    }
+
+    public async void Launch()
+    {
+        // Trying to launch assistant
+        try
         {
-            // Waiting for input text
-            await UniTask.WaitUntil(() => _message != string.Empty);
-            userMessage = _message;
-            _message = string.Empty;
-            
+            // Getting configuration
+            AssistantParams assistantParams = Get();
+
             // Invoking event
-            OnGenerationStarted?.Invoke();
+            string[] names = assistantParams.ModelName.Split('-');
+            OnModelChosen?.Invoke(names[0] + ": " + names[2]);
 
-            // Getting response
-            StringBuilder stringBuilder = new();
-            await foreach (var text in _chatSession.ChatAsync(new ChatHistory.Message(AuthorRole.User, userMessage), _inferenceParams))
-            {
-                if (_cts.Token.IsCancellationRequested) return;
-                
-                stringBuilder.Append(text);
-
-                await UniTask.NextFrame();
-            }
-            
-            // Invoking event
-            OnGenerationEnded?.Invoke();
-
-            // Showing message
-            ConversationManager.Message(ClearResponse(stringBuilder.ToString()));
+            // Launching chat
+            AssistantChat assistantChat = new(assistantParams);
+            assistantChat.OnGenerationStarted += OnGenerationStarted;
+            assistantChat.OnGenerationEnded += OnGenerationEnded;
+            _assistantChat = assistantChat;
+            await assistantChat.Inference();
+        }
+        catch (Exception)
+        {
+            // TODO: Change to exception handler of some type (example: window with exception message)
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
-
-    private string ClearResponse(string response)
-    {
-        // Clearing role names
-        foreach (string role in RoleNames) response = response.Replace(role, string.Empty);
-
-        // Trimming response
-        response = response.Trim().Trim('\n');
-
-        // Returning cleared response
-        return response;
-    }
-
-    private void SetMessage(string message) => _message = _isAvailable ? message : string.Empty;
-    private void SetAvailable(int turn) => _isAvailable = turn == 0;
-
-    public static void ResetState()
-    {
-        Instance._cts?.Cancel();
-        Instance._isAvailable = true;
-    }
-    private void OnDestroy() => ResetState();
-}
-
-public enum ExecutorType
-{
-    InteractiveExecutor,
-    //StatelessExecutor
-}
-
-public class AssistantParams
-{
-    public string ModelName;
-
-    public ExecutorType ExecutorType;
-
-    public uint? ContextSize;
-    public int GpuLayerCount;
-
-    public float Temperature;
-    public int MaxTokens;
-
-    public string SystemContext;
-
-    public AssistantParams(string modelName, ExecutorType executorType, uint? contextSize, int gpuLayerCount, float temperature, int maxTokens, string systemContext)
-    {
-        ModelName = modelName;
-        
-        ExecutorType = executorType;
-        
-        ContextSize = contextSize;
-        GpuLayerCount = gpuLayerCount;
-        
-        Temperature = temperature;
-        MaxTokens = maxTokens;
-        
-        SystemContext = systemContext;
-    }
+    
+    public static void Dispose() => Instance.OnDestroy();
+    private void OnDestroy() => _assistantChat?.Dispose();
 }
