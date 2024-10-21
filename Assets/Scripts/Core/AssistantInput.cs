@@ -21,19 +21,21 @@ public class AssistantInput : MonoBehaviour
     #region Events
 
     public event Action<string> OnModelChosen;
-    
+
     public event Action OnGenerationStarted;
     public event Action OnGenerationEnded;
 
     #endregion
     
+    private const string DefaultModelNamePath = "Models";
+
     private const uint DefaultContextSize = 2048;
     private const int DefaultGpuLayerCount = 16;
 
     private const float DefaultTemperature = 0.6f;
     private const int DefaultMaxTokens = 1024;
 
-    private const string DefaultSystemContext = "You are an all-knowning and very responsive assistant who always answers accurately with the least words possible. Use only English language.";
+    private const string DefaultContextPath = "Contexts";
 
     [Header("Configurator UI settings")]
     [Space]
@@ -47,28 +49,22 @@ public class AssistantInput : MonoBehaviour
     [SerializeField] private TMP_InputField temperatureInputField;
     [SerializeField] private TMP_InputField maxTokensInputField;
 
-    [SerializeField] private TMP_InputField systemContextInputField;
-    
+    [SerializeField] private TMP_Dropdown contextDropdown;
+
+    private Button _launchButton;
+
     private IDisposable _assistantChat;
 
     private void Start()
     {
-        // Setting available models
-        modelNameDropdown.ClearOptions();
-        List<string> names = (from file in new DirectoryInfo(Application.streamingAssetsPath).GetFiles() where file.Name.EndsWith(".gguf") select file.Name).ToList();
-        if (names.Count != 0)
-        {
-            modelNameDropdown.AddOptions(names);
-        }
-        else
-        {
-            modelNameDropdown.interactable = false;
-            this.GetComponent<Button>().interactable = false;
-        }
+        // Getting references
+        _launchButton = this.GetComponent<Button>();
+        
+        // Updating model names
+        UpdateModelNames();
 
-        // Setting available executors
-        executorDropdown.ClearOptions();
-        executorDropdown.AddOptions(Enum.GetNames(typeof(ExecutorType)).ToList());
+        // Updating executors
+        UpdateExecutors();
 
         // Setting default context size
         contextSizeInputField.placeholder.GetComponent<TMP_Text>().text = DefaultContextSize.ToString();
@@ -80,8 +76,47 @@ public class AssistantInput : MonoBehaviour
         // Setting default max tokens
         maxTokensInputField.placeholder.GetComponent<TMP_Text>().text = DefaultMaxTokens.ToString();
 
-        // Setting default system context
-        systemContextInputField.placeholder.GetComponent<TMP_Text>().text = DefaultSystemContext;
+        // Updating contexts
+        UpdateContexts();
+    }
+    
+    public void UpdateModelNames()
+    {
+        // Setting available models
+        modelNameDropdown.ClearOptions();
+        List<string> names = (from file in new DirectoryInfo(Application.streamingAssetsPath + "/" + DefaultModelNamePath).GetFiles() where file.Name.EndsWith(".gguf") select file.Name).ToList();
+        modelNameDropdown.interactable = false;
+        _launchButton.interactable = false;
+        if (names.Count != 0)
+        {
+            modelNameDropdown.AddOptions(names);
+            
+            modelNameDropdown.interactable = true;
+            _launchButton.interactable = true;
+        }
+    }
+    
+    public void UpdateExecutors()
+    {
+        // Setting available executors
+        executorDropdown.ClearOptions();
+        executorDropdown.AddOptions(Enum.GetNames(typeof(ExecutorType)).ToList());
+    }
+    
+    public void UpdateContexts()
+    {
+        // Setting available contexts
+        contextDropdown.ClearOptions();
+        List<string> contexts = (from file in new DirectoryInfo(Application.streamingAssetsPath + "/" + DefaultContextPath).GetFiles() where file.Name.EndsWith(".json") select file.Name).ToList();
+        contextDropdown.interactable = false;
+        _launchButton.interactable = false;
+        if (contexts.Count != 0)
+        {
+            contextDropdown.AddOptions(contexts);
+            
+            contextDropdown.interactable = true;
+            _launchButton.interactable = true;
+        }
     }
 
     private AssistantParams Get()
@@ -97,11 +132,8 @@ public class AssistantInput : MonoBehaviour
         int maxTokens = DefaultMaxTokens;
         if (maxTokensInputField.text != string.Empty && (!int.TryParse(maxTokensInputField.text, out maxTokens) || maxTokens < 0)) throw new FormatException("Max tokens value was incorrect!");
 
-        string systemContext = systemContextInputField.text;
-        if (systemContext == string.Empty) systemContext = DefaultSystemContext;
-
         // Creating configuration
-        return new(modelNameDropdown.options[modelNameDropdown.value].text, (ExecutorType)executorDropdown.value, contextSize, gpuLayerCount, temperature, maxTokens, systemContext);
+        return new(DefaultModelNamePath + "/" + modelNameDropdown.options[modelNameDropdown.value].text, (ExecutorType)executorDropdown.value, contextSize, gpuLayerCount, temperature, maxTokens, DefaultContextPath + "/" + contextDropdown.options[contextDropdown.value].text);
     }
 
     public async void Launch()
@@ -113,7 +145,7 @@ public class AssistantInput : MonoBehaviour
             AssistantParams assistantParams = Get();
 
             // Invoking event
-            string[] names = assistantParams.ModelName.Split('-');
+            string[] names = modelNameDropdown.options[modelNameDropdown.value].text.Split('-');
             OnModelChosen?.Invoke(names[0] + ": " + names[2]);
 
             // Launching chat
@@ -129,7 +161,7 @@ public class AssistantInput : MonoBehaviour
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
-    
+
     public static void Dispose() => Instance.OnDestroy();
     private void OnDestroy() => _assistantChat?.Dispose();
 }

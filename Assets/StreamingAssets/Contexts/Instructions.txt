@@ -1,0 +1,33 @@
+Add .json contexts in this folder
+
+This is necessary for each context file be written as follows:
+
+{
+    "Contexts":
+    [
+        {
+            "Type": "One of <System/User/Assistant>",
+            "Content": "Your text here."
+        }
+    ]
+}
+
+Example:
+
+{
+    "Contexts":
+    [
+        {
+            "Type": "System",
+            "Content": "This is system context."
+        },
+	{
+            "Type": "User",
+            "Content": "this is user question."
+        },
+	{
+            "Type": "Assistant",
+            "Content": "This is assistant answer."
+        }
+    ]
+}

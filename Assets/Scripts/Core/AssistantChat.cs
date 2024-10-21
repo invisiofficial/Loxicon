@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
@@ -69,9 +70,12 @@ public class AssistantChat : IDisposable
             _ => new InteractiveExecutor(context),
         };
 
+        // Reading chat history
+        History history = JsonUtility.FromJson<History>(File.ReadAllText(Application.streamingAssetsPath + "/" + _assistantParams.Context));
+
         // Adding chat history
         var chatHistory = new ChatHistory();
-        chatHistory.AddMessage(AuthorRole.System, _assistantParams.SystemContext);
+        foreach (Context historyContext in history.Contexts) chatHistory.AddMessage((AuthorRole)Enum.Parse(typeof(AuthorRole), historyContext.Type), historyContext.Content);
 
         // Creating chat
         _chatSession = new(executor, chatHistory);
@@ -88,7 +92,7 @@ public class AssistantChat : IDisposable
             // Waiting for input text or cancellation
             await UniTask.WaitUntil(() => _message != string.Empty || _cts.Token.IsCancellationRequested);
             if (_cts.Token.IsCancellationRequested) return;
-            
+
             userMessage = _message;
             _message = string.Empty;
 
@@ -158,9 +162,9 @@ public class AssistantParams
     public readonly float Temperature;
     public readonly int MaxTokens;
 
-    public readonly string SystemContext;
+    public readonly string Context;
 
-    public AssistantParams(string modelName, ExecutorType executorType, uint? contextSize, int gpuLayerCount, float temperature, int maxTokens, string systemContext)
+    public AssistantParams(string modelName, ExecutorType executorType, uint? contextSize, int gpuLayerCount, float temperature, int maxTokens, string context)
     {
         ModelName = modelName;
 
@@ -172,6 +176,25 @@ public class AssistantParams
         Temperature = temperature;
         MaxTokens = maxTokens;
 
-        SystemContext = systemContext;
+        Context = context;
+    }
+}
+
+[Serializable]
+public class History
+{
+    public List<Context> Contexts = new();
+}
+
+[Serializable]
+public struct Context
+{
+    public string Type;
+    public string Content;
+
+    public Context(string type, string content)
+    {
+        Type = type;
+        Content = content;
     }
 }
