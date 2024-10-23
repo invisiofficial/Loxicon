@@ -66,7 +66,7 @@ public class DynamicRect : MonoBehaviour
         onResize?.Invoke(maxLinesReached);
 
         // Resizing if line number is changed
-        if (lineCount == _linesCount) return;
+        if (lineCount == _linesCount || lineCount == 0) return;
         if (maxLinesReached)
         {
             if (_linesCount < maxLinesCount) lineCount = maxLinesCount;

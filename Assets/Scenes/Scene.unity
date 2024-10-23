@@ -6842,6 +6842,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxBlocks: 25
+  maxScale: 10
+  minScale: 6
+  scaleFactor: 0.1
+  scaleDuration: 0.1
+  easeType: 7
 --- !u!114 &550522783
 MonoBehaviour:
   m_ObjectHideFlags: 0

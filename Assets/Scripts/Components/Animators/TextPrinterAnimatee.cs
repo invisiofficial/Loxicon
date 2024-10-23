@@ -30,7 +30,7 @@ public class TextPrinterAnimatee : TweenAnimatee
         Sequence sequence = DOTween.Sequence();
         
         // Printing text
-        Action action = behaviors[index].Text == string.Empty ? () => _textPrinter.Print() : () => _textPrinter.Print(behaviors[index].Text);
+        Action action = behaviors[index].Text != string.Empty ? () => _textPrinter.Clear() : () => _textPrinter.Print(behaviors[index].Text);
         sequence.onComplete = () => action?.Invoke();
         
         // Returning tween

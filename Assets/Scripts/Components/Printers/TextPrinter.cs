@@ -18,6 +18,10 @@ public class TextPrinter : MonoBehaviour
     [SerializeField] private TMP_Text text;
 
     [SerializeField] private float interval = 0.03f;
+    
+    private int _currentPosition;
+    
+    private bool _isPrinting;
 
     private void Awake()
     {
@@ -25,30 +29,41 @@ public class TextPrinter : MonoBehaviour
         text.text = string.Empty;
     }
 
-    public void Print() => StartCoroutine(PrintMessage(Message));
+    public void Print() => StartCoroutine(PrintMessage(string.Empty));
     public void Print(string messsage) => StartCoroutine(PrintMessage(messsage));
 
     private IEnumerator PrintMessage(string messsage)
     {
-        // Instantly print
-        if (interval == 0.0f)
-        {
-            text.text = messsage;
-            
-            onValueChanged?.Invoke();
-            
-            yield break;
-        }
+        // Applying message
+        Message += messsage;
+        
+        // Checking for already printing
+        if (_isPrinting) yield break;
+        _isPrinting = true;
         
         // Print with interval
-        for (int i = 1; i <= messsage.Length; i++)
+        while (_currentPosition < Message.Length - 1 && interval != 0.0f)
         {
-            text.text = messsage[..i];
+            text.text = Message[..++_currentPosition];
 
             onValueChanged?.Invoke();
 
             yield return new WaitForSeconds(interval);
         }
+        
+        // Setting full message
+        text.text = Message;
+        _currentPosition = Message.Length;
+        
+        onValueChanged?.Invoke();
+        
+        _isPrinting = false;
+    }
+    
+    public void Clear()
+    {
+        text.text = string.Empty;
+        _currentPosition = 0;
     }
     
     public void Copy() => GUIUtility.systemCopyBuffer = Message;

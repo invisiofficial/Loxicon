@@ -16,6 +16,7 @@ public class AssistantChat : IDisposable
     #region Events
 
     public event Action OnGenerationStarted;
+    public event Action<string> OnGeneration;
     public event Action OnGenerationEnded;
 
     #endregion
@@ -72,6 +73,7 @@ public class AssistantChat : IDisposable
 
         // Reading chat history
         History history = JsonUtility.FromJson<History>(File.ReadAllText(Application.streamingAssetsPath + "/" + _assistantParams.Context));
+        
 
         // Adding chat history
         var chatHistory = new ChatHistory();
@@ -112,8 +114,12 @@ public class AssistantChat : IDisposable
             await foreach (var text in _chatSession.ChatAsync(new ChatHistory.Message(AuthorRole.User, userMessage), inferenceParams))
             {
                 if (_cts.Token.IsCancellationRequested) return;
-
+                
+                // Updating response
                 responseBuilder.Append(text);
+                
+                // Invoking event
+                OnGeneration?.Invoke(text);
 
                 await UniTask.NextFrame();
             }

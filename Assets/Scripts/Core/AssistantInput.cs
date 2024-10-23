@@ -23,6 +23,7 @@ public class AssistantInput : MonoBehaviour
     public event Action<string> OnModelChosen;
 
     public event Action OnGenerationStarted;
+    public event Action<string> OnGeneration;
     public event Action OnGenerationEnded;
 
     #endregion
@@ -151,6 +152,7 @@ public class AssistantInput : MonoBehaviour
             // Launching chat
             AssistantChat assistantChat = new(assistantParams);
             assistantChat.OnGenerationStarted += OnGenerationStarted;
+            assistantChat.OnGeneration += OnGeneration;
             assistantChat.OnGenerationEnded += OnGenerationEnded;
             _assistantChat = assistantChat;
             await assistantChat.Inference();

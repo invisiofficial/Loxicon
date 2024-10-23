@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 
 using UnityEngine;
@@ -10,6 +11,12 @@ public class UserInput : MonoBehaviour
     
     public static UserInput Instance;
     private void Awake() => Instance = this;
+    
+    #endregion
+    
+    #region Events
+    
+    public event Action<string> OnSubmit;
     
     #endregion
     
@@ -67,7 +74,11 @@ public class UserInput : MonoBehaviour
         if (!_isAvailable) return;
         
         // Sending message
-        ConversationManager.Message(message != string.Empty ? message : defaultMessages[Random.Range(0, defaultMessages.Length)]);
+        message = message != string.Empty ? message : defaultMessages[UnityEngine.Random.Range(0, defaultMessages.Length)];
+        ConversationManager.Message(message);
+        
+        // Invoking event
+        OnSubmit?.Invoke(message);
         
         // Clearing input field
         StartCoroutine(WaitClear());
