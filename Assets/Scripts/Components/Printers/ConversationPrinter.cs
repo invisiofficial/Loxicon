@@ -49,18 +49,11 @@ public class ConversationPrinter : MonoBehaviour
         
         // Listening to the assistant
         AssistantInput.Instance.OnGenerationStarted += () => MentionGenerating(true);
-        AssistantInput.Instance.OnGeneration += UpdateMessage;
+        AssistantInput.Instance.OnGeneration += (string message) => { if (_currentPrinter == null) CreateMessage(string.Empty, false); UpdateMessage(message); };
         AssistantInput.Instance.OnGenerationEnded += () => MentionGenerating(false);
         
         // Listening to conversation
-        ConversationManager.Instance.OnMessageReceived += (string message) => 
-        {
-            if (ConversationManager.Turn == 0) return;
-            
-            _currentPrinter.Message = message;
-            UpdateMessage(string.Empty);
-            _currentPrinter = null;
-        };
+        ConversationManager.Instance.OnMessageReceived += (string message) => { if (ConversationManager.Turn == 0) return; CompleteMessage(message); };
     }
     
     private void Update()
@@ -101,11 +94,16 @@ public class ConversationPrinter : MonoBehaviour
     
     private void UpdateMessage(string message)
     {
-        // Creating assistant message
-        if (_currentPrinter == null) CreateMessage(string.Empty, false);
-        
         // Printing message
         _currentPrinter.Print(message);
+    }
+    
+    private void CompleteMessage(string message)
+    {
+        // Showing final result
+        _currentPrinter.Message = message;
+        UpdateMessage(string.Empty);
+        _currentPrinter = null;
     }
     
     private void MentionGenerating(bool create)
