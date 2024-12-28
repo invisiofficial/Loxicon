@@ -8,6 +8,7 @@ using UnityEngine;
 
 using LLama;
 using LLama.Common;
+using LLama.Sampling;
 
 using Cysharp.Threading.Tasks;
 
@@ -73,7 +74,7 @@ public class AssistantChat : IDisposable
 
         // Reading chat history
         History history = JsonUtility.FromJson<History>(File.ReadAllText(Application.streamingAssetsPath + "/" + _assistantParams.Context));
-        
+
 
         // Adding chat history
         var chatHistory = new ChatHistory();
@@ -101,7 +102,10 @@ public class AssistantChat : IDisposable
             // Setting up inference params
             InferenceParams inferenceParams = new()
             {
-                Temperature = _assistantParams.Temperature,
+                SamplingPipeline = new DefaultSamplingPipeline
+                {
+                    Temperature = _assistantParams.Temperature
+                },
                 MaxTokens = _assistantParams.MaxTokens,
                 AntiPrompts = AntiPromts
             };
@@ -114,10 +118,10 @@ public class AssistantChat : IDisposable
             await foreach (var text in _chatSession.ChatAsync(new ChatHistory.Message(AuthorRole.User, userMessage), inferenceParams))
             {
                 if (_cts.Token.IsCancellationRequested) return;
-                
+
                 // Updating response
                 responseBuilder.Append(text);
-                
+
                 // Invoking event
                 OnGeneration?.Invoke(text);
 
