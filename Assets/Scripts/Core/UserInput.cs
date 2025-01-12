@@ -1,9 +1,9 @@
-using System;
 using System.Collections;
 
 using UnityEngine;
 
 using TMPro;
+using System;
 
 public class UserInput : MonoBehaviour
 {
@@ -52,38 +52,46 @@ public class UserInput : MonoBehaviour
 
     private TMP_InputField _inputField;
     
-    private bool _isAvailable = true;
+    private bool IsAvailable;
 
     private void Start()
     {
         // Getting references
         _inputField = this.GetComponent<TMP_InputField>();
-
-        // Listening to the conversation
-        ConversationManager.Instance.OnTurnChanged += SetAvailable;
         
         // Adding submit event
-        _inputField.onSubmit.AddListener((message) => SubmitMessage(message));
+        _inputField.onSubmit.AddListener(SubmitMessage);
     }
     
-    private void SetAvailable(int turn) => _isAvailable = turn == 0;
+    public void Activate()
+    {
+        // Activating submitting
+        IsAvailable = true;
+        
+        // Focusing on input field
+        _inputField.ActivateInputField();
+    }
 
     private void SubmitMessage(string message)
     {
         // Cheking for available
-        if (!_isAvailable) return;
+        if (!IsAvailable) return;
+        IsAvailable = false;
         
         // Sending message
         message = message != string.Empty ? message : defaultMessages[UnityEngine.Random.Range(0, defaultMessages.Length)];
-        ConversationManager.Message(message);
+        Action<string> updateMessage = ConversationManager.Message(0);
+        updateMessage.Invoke(message);
         
-        // Invoking event
+        // Invoking the event
         OnSubmit?.Invoke(message);
         
         // Clearing input field
         StartCoroutine(WaitClear());
         IEnumerator WaitClear()
         {
+            _inputField.DeactivateInputField();
+            
             _inputField.textComponent.enabled = false;
             
             yield return new WaitForEndOfFrame();
@@ -94,9 +102,5 @@ public class UserInput : MonoBehaviour
         }   
     }
     
-    public static void ResetState()
-    {
-        Instance._isAvailable = true;
-        Instance._inputField.text = string.Empty;
-    }
+    public static void ResetState() => Instance._inputField.text = string.Empty;
 }

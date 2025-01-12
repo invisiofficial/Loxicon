@@ -4,9 +4,17 @@ using UnityEngine;
 using UnityEngine.UI;
 
 using DG.Tweening;
+using System;
 
 public class ConversationPrinter : MonoBehaviour
 {
+    #region Singleton implementation
+
+    public static ConversationPrinter Instance;
+    private void Awake() => Instance = this;
+
+    #endregion
+    
     [Header("Conversation settings")]
     [Space]
     [SerializeField] private int maxBlocks = 25;
@@ -25,12 +33,9 @@ public class ConversationPrinter : MonoBehaviour
     
     private GameObject _generatingObject;
     
-    private GameObject _blockUserPrefab;
-    private GameObject _blockAssistantPrefab;
+    private List<GameObject> _messagePrefabs = new();
     
     private GameObject _generatingPrefab;
-    
-    private TextPrinter _currentPrinter;
     
     private int _currentScale = 8;
     
@@ -39,28 +44,13 @@ public class ConversationPrinter : MonoBehaviour
     private void Start()
     {
         // Getting references
-        _blockUserPrefab = Resources.Load("Prefabs/BlockUser") as GameObject;
-        _blockAssistantPrefab = Resources.Load("Prefabs/BlockAssistant") as GameObject;
+        _messagePrefabs.Add(Resources.Load("Prefabs/BlockUser") as GameObject);
+        _messagePrefabs.Add(Resources.Load("Prefabs/BlockAssistant") as GameObject);
         
         _generatingPrefab = Resources.Load("Prefabs/Generating") as GameObject;
         
-        // Listening to the user
-        UserInput.Instance.OnSubmit += (string message) => CreateMessage(message, true);
-        
-        // Listening to the assistant
-        AssistantInput.Instance.OnGenerationStarted += () => MentionGenerating(true);
-        AssistantInput.Instance.OnGeneration += UpdateMessage;
-        AssistantInput.Instance.OnGenerationEnded += () => MentionGenerating(false);
-        
         // Listening to conversation
-        ConversationManager.Instance.OnMessageReceived += (string message) => 
-        {
-            if (ConversationManager.Turn == 0) return;
-            
-            _currentPrinter.Message = message;
-            UpdateMessage(string.Empty);
-            _currentPrinter = null;
-        };
+        ConversationManager.Instance.OnMessage += CreateMessage;
     }
     
     private void Update()
@@ -79,36 +69,25 @@ public class ConversationPrinter : MonoBehaviour
         DOTween.Sequence().AppendInterval(scaleDuration).onComplete = () => _isResizing = false;
     }
     
-    private void CreateMessage(string message, bool user)
+    private Action<string> CreateMessage(int sender)
     {
         // Choosing prefab
-        GameObject prefab;
-        if (user) prefab = _blockUserPrefab;
-        
-        else prefab = _blockAssistantPrefab;
+        GameObject prefab = _messagePrefabs[sender];
         
         // Creating message object
         GameObject gameObject = Instantiate(prefab, this.transform);
         gameObject.transform.localScale = _currentScale * scaleFactor * Vector3.one;
-        _currentPrinter = gameObject.GetComponent<TextPrinter>();
-        _currentPrinter.Print(message);
-        if (user) _currentPrinter = null;
         _blocks.Enqueue(gameObject);
         
         // Checking for blocks limit reached
         if (_blocks.Count > maxBlocks) Destroy(_blocks.Dequeue());
-    }
-    
-    private void UpdateMessage(string message)
-    {
-        // Creating assistant message
-        if (_currentPrinter == null) CreateMessage(string.Empty, false);
         
-        // Printing message
-        _currentPrinter.Print(message);
+        // Creating updater delegate
+        TextPrinter currentPrinter = gameObject.GetComponent<TextPrinter>();
+        return (string message) => currentPrinter.Print(message);
     }
     
-    private void MentionGenerating(bool create)
+    public void MentionGenerating(bool create)
     {
         if (create)
         {
