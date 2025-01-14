@@ -45,8 +45,8 @@ public class ReleaseAlgorithmPartFactory<T> : MonoBehaviour, ISerializable, IIni
         Draggable draggable1 = _initializePartObject.GetComponent<Draggable>();
         Draggable draggable2 = this.GetComponent<Draggable>();
 
-        draggable1.OnDelete += () => Destroy(this.gameObject);
-        draggable2.OnDelete += () => Destroy(_initializePartObject);
+        draggable1.OnDeleted += () => Destroy(this.gameObject);
+        draggable2.OnDeleted += () => Destroy(_initializePartObject);
 
         draggable1.SetLimits(draggable2, null);
         draggable2.SetLimits(null, draggable1);

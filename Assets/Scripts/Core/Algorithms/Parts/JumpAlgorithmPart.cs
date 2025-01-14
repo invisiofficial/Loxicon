@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 namespace Invisi.Pseudocode
@@ -11,13 +10,7 @@ namespace Invisi.Pseudocode
         public JumpAlgorithmPart(string conditionVariableName, int jumpIndex) => (this._conditionVariableName, this._jumpIndex) = (conditionVariableName, jumpIndex);
 
         public async Task Execute(AlgorithmContext context)
-        {
-            // Checking for variable
-            if (!_conditionVariableName.StartsWith('@')) throw new ArgumentException($"Incorrect name format! Variable name has to start with '@'.");
-            
-            // Checking for jump index
-            if (context.CurrentIndex == _jumpIndex) throw new ArgumentException($"Incorrect jump index! You can't jump to the same block.");
-            
+        {            
             // Checking for condition
             if (_conditionVariableName == "@false") return;
             if (_conditionVariableName != "@true")

@@ -10,10 +10,7 @@ namespace Invisi.Pseudocode
         public OutputAlgorithmPart(string outputVariableName) => this._outputVariableName = outputVariableName;
 
         public async Task Execute(AlgorithmContext context)
-        {
-            // Checking for variable
-            if (!_outputVariableName.StartsWith('@')) throw new ArgumentException($"Incorrect name format! Variable name has to start with '@'.");
-            
+        {            
             // Creating message block
             Action<string> updateMessage = ConversationManager.Message(1);
             

@@ -1,11 +1,17 @@
 using System;
-using System.Linq;
-using System.Collections.Generic;
 
+using System.Collections.Generic;
+using Invisi.Pseudocode.Compiler;
 using UnityEngine;
 
 public class AlgorithmPartBlockFactory : MonoBehaviour
 {
+    #region Events
+    
+    public event Action OnAlgorithmChanged;
+    
+    #endregion
+    
     [SerializeField] private GameObject[] factoryBlockPrefabs;
 
     private readonly Dictionary<GameObject, int> _factoryBlockIndexMap = new();
@@ -23,16 +29,24 @@ public class AlgorithmPartBlockFactory : MonoBehaviour
         // Configuring the view
         Draggable draggable = gameObject.AddComponent<Draggable>();
         
-        draggable.OnDelete += () => _factoryBlockIndexMap.Remove(gameObject);
-        draggable.OnDelete += () => _factoryBlockKeys.Remove(gameObject);
-
+        draggable.OnDeleted += () => _factoryBlockIndexMap.Remove(gameObject);
+        draggable.OnDeleted += () => _factoryBlockKeys.Remove(gameObject);
+        
         // Configuring the model
         if (gameObject.TryGetComponent(out ISerializable serializable) && serialization != null) serializable.Deserialize(serialization);
         
         if (gameObject.TryGetComponent(out IInitializable initializable)) initializable.Initialize(_factoryBlockKeys.ToArray());
         
+        if (gameObject.TryGetComponent(out ICompilable compilable)) compilable.OnCompilationRequired += OnAlgorithmChanged;
+        
+        draggable.OnPositionUpdated += OnAlgorithmChanged;
+        draggable.OnDeleted += OnAlgorithmChanged;
+        
         // Activating the object
         gameObject.SetActive(true);
+        
+        // Invoking the event
+        OnAlgorithmChanged?.Invoke();
     }
 
     public void SetPreset(Preset<AlgorithmParams> preset)

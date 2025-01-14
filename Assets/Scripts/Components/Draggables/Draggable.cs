@@ -5,7 +5,8 @@ public class Draggable : MonoBehaviour, IDraggable, IPointerClickHandler, IBegin
 {
     #region Events
 
-    public event System.Action OnDelete;
+    public event System.Action OnDeleted;
+    public event System.Action OnPositionUpdated;
 
     #endregion
 
@@ -94,9 +95,12 @@ public class Draggable : MonoBehaviour, IDraggable, IPointerClickHandler, IBegin
 
         // Destroying placeholder
         Destroy(_placeholder);
+        
+        // Invoking the event
+        OnPositionUpdated?.Invoke();
     }
     
-    private void OnDestroy() => OnDelete?.Invoke();
+    private void OnDestroy() => OnDeleted?.Invoke();
 
     #region IDraggable implementation
 

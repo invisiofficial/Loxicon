@@ -1,9 +1,9 @@
+using System;
 using System.Collections;
 
 using UnityEngine;
 
 using TMPro;
-using System;
 
 public class UserInput : MonoBehaviour
 {
@@ -63,6 +63,18 @@ public class UserInput : MonoBehaviour
         _inputField.onSubmit.AddListener(SubmitMessage);
     }
     
+    private void Update()
+    {
+        // Checking for shift enter
+        if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)) return;
+        if (!Input.GetKeyDown(KeyCode.Return) && !Input.GetKeyDown(KeyCode.KeypadEnter)) return;
+
+        // Inserting a new line into the input field
+        _inputField.text += "\n";
+        _inputField.caretPosition = _inputField.text.Length;
+        _inputField.ActivateInputField(); 
+    }
+
     public void Activate()
     {
         // Activating submitting
@@ -74,6 +86,9 @@ public class UserInput : MonoBehaviour
 
     private void SubmitMessage(string message)
     {
+        // Checking for control
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) return;
+        
         // Cheking for available
         if (!IsAvailable) return;
         IsAvailable = false;
@@ -86,7 +101,7 @@ public class UserInput : MonoBehaviour
         // Invoking the event
         OnSubmit?.Invoke(message);
         
-        // Clearing input field
+        // Clearing the input field
         StartCoroutine(WaitClear());
         IEnumerator WaitClear()
         {

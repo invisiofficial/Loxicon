@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Invisi.Pseudocode
@@ -13,10 +11,7 @@ namespace Invisi.Pseudocode
         public InputAlgorithmPart(string inputVariableName) => this._inputVariableName = inputVariableName;
 
         public async Task Execute(AlgorithmContext context)
-        {
-            // Checking for variable
-            if (!_inputVariableName.StartsWith('@')) throw new ArgumentException($"Incorrect name format! Variable name has to start with '@'.");
-            
+        {            
             // Clearing message
             _message = string.Empty;
             

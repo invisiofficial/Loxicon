@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,10 +12,7 @@ namespace Invisi.Pseudocode
         public InferModelAlgorithmPart(string inputVariableName, string modelVariableName, string outputVariableName) => (this._inputVariableName, this._modelVariableName, this._outputVariableName) = (inputVariableName, modelVariableName, outputVariableName);
 
         public async Task Execute(AlgorithmContext context)
-        {            
-            // Checking for variable
-            if (!_inputVariableName.StartsWith('@') || !_modelVariableName.StartsWith('@') || !_outputVariableName.StartsWith('@')) throw new ArgumentException($"Incorrect name format! Variable name has to start with '@'.");
-            
+        {
             // Getting a model variable
             AlgorithmVariable modelAlgorithmVariable = context.Variables[_modelVariableName.TrimStart('@')] as AlgorithmVariable;
             while (!context.CancellationTokenSource.Token.IsCancellationRequested && !modelAlgorithmVariable.Free) await Task.Yield();
