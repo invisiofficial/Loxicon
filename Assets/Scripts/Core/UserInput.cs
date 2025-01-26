@@ -52,38 +52,61 @@ public class UserInput : MonoBehaviour
 
     private TMP_InputField _inputField;
     
-    private bool _isAvailable = true;
+    private bool IsAvailable;
 
     private void Start()
     {
         // Getting references
         _inputField = this.GetComponent<TMP_InputField>();
-
-        // Listening to the conversation
-        ConversationManager.Instance.OnTurnChanged += SetAvailable;
         
         // Adding submit event
-        _inputField.onSubmit.AddListener((message) => SubmitMessage(message));
+        _inputField.onSubmit.AddListener(SubmitMessage);
     }
     
-    private void SetAvailable(int turn) => _isAvailable = turn == 0;
+    private void Update()
+    {
+        // Checking for shift enter
+        if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)) return;
+        if (!Input.GetKeyDown(KeyCode.Return) && !Input.GetKeyDown(KeyCode.KeypadEnter)) return;
+
+        // Inserting a new line into the input field
+        _inputField.text += "\n";
+        _inputField.caretPosition = _inputField.text.Length;
+        _inputField.ActivateInputField(); 
+    }
+
+    public void Activate()
+    {
+        // Activating submitting
+        IsAvailable = true;
+        
+        // Focusing on input field
+        _inputField.ActivateInputField();
+    }
 
     private void SubmitMessage(string message)
     {
+        // Checking for control
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) return;
+        
         // Cheking for available
-        if (!_isAvailable) return;
+        if (!IsAvailable) return;
+        IsAvailable = false;
         
         // Sending message
         message = message != string.Empty ? message : defaultMessages[UnityEngine.Random.Range(0, defaultMessages.Length)];
-        ConversationManager.Message(message);
+        Action<string> updateMessage = ConversationManager.Message(0);
+        updateMessage.Invoke(message);
         
-        // Invoking event
+        // Invoking the event
         OnSubmit?.Invoke(message);
         
-        // Clearing input field
+        // Clearing the input field
         StartCoroutine(WaitClear());
         IEnumerator WaitClear()
         {
+            _inputField.DeactivateInputField();
+            
             _inputField.textComponent.enabled = false;
             
             yield return new WaitForEndOfFrame();
@@ -94,9 +117,5 @@ public class UserInput : MonoBehaviour
         }   
     }
     
-    public static void ResetState()
-    {
-        Instance._isAvailable = true;
-        Instance._inputField.text = string.Empty;
-    }
+    public static void ResetState() => Instance._inputField.text = string.Empty;
 }

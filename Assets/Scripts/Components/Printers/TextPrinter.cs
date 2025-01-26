@@ -29,13 +29,13 @@ public class TextPrinter : MonoBehaviour
         text.text = string.Empty;
     }
 
-    public void Print() => StartCoroutine(PrintMessage(string.Empty));
+    public void Print() => StartCoroutine(PrintMessage(Message));
     public void Print(string messsage) => StartCoroutine(PrintMessage(messsage));
 
     private IEnumerator PrintMessage(string messsage)
     {
         // Applying message
-        Message += messsage;
+        Message = messsage.TrimStart();
         
         // Checking for already printing
         if (_isPrinting) yield break;
