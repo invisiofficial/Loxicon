@@ -45,7 +45,8 @@ public class NeuralNetworkModel
         var parameters = new ModelParams(modelPath)
         {
             ContextSize = _chatParams.ContextSize,
-            GpuLayerCount = _chatParams.GpuLayerCount
+            GpuLayerCount = _chatParams.GpuLayerCount,
+            SplitMode = LLama.Native.GPUSplitMode.Row
         };
         await UniTask.SwitchToThreadPool();
         using var model = LLamaWeights.LoadFromFile(parameters);

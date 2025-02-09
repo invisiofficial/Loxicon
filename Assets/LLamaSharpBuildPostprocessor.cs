@@ -6,7 +6,7 @@ using System.IO;
 
 public class LLamaSharpBuildPostprocessor 
 {
-    private static readonly string[] _libs = new string[] { "libllama.dll", "ggml.dll", "llava_shared.dll"};
+    private static readonly string[] _libs = new string[] { "libllama.dll", "ggml.dll", "ggml-base.dll", "ggml-cpu.dll", "ggml-vulkan.dll", "llava_shared.dll"};
     
     [PostProcessBuild(1)]
     public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
